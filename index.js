@@ -8,8 +8,8 @@ const fs = require('fs')
 const simpleGit = require('simple-git')
 const os = require('os')
 const util = require('util')
-const { Octokit, RestEndpointMethodTypes } = require('@octokit/rest')
-const { createAppAuth } = require('@octokit/auth-app');
+const { Octokit } = require('@octokit/rest')
+const { createAppAuth } = require('@octokit/auth-app')
 
 const execAsync = util.promisify(exec)
 
@@ -20,7 +20,23 @@ const testRepo = 'chivalryq/test-matrix-on-tags'
 const catalogRepo = 'kubevela/catalog'
 var watchRepo = testRepo
 
+const privateKey = process.env.PRIVATE_KEY
+const appId = process.env.APP_ID
+const installationId = process.env.INSTALLATION_ID
+
 module.exports = app => {
+
+  const auth = {
+    appId,
+    privateKey,
+    installationId,
+  }
+
+  const octokit = new Octokit({
+    auth: auth,
+    authStrategy: createAppAuth,
+  })
+
   app.on(['release.published'], async context => {
     if (context.payload.repository.full_name === watchRepo) {
       const tagName = context.payload.release.tag_name
@@ -68,17 +84,6 @@ module.exports = app => {
         await gitRepo.push(['--set-upstream', 'authenticated', newBranch])
         app.log.info('Pushed to ' + newBranch)
 
-        const privateKey = process.env.PRIVATE_KEY;
-        const appId = process.env.APP_ID;
-        const installationId = process.env.INSTALLATION_ID;
-
-        const auth = createAppAuth({
-          appId,
-          privateKey,
-          installationId,
-        });
-
-        const octokit = new Octokit({ auth });
         // create a pull request
         const pr = {
           owner: 'kubevela',
