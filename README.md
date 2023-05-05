@@ -4,6 +4,9 @@
 
 ## Setup
 
+1. Use go 1.19
+ 
+2. 
 ```sh
 # Install dependencies
 npm install
